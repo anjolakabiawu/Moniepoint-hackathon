@@ -3,15 +3,18 @@ import pandas as pd
 from datetime import datetime
 
 # Loading the data
-def parsing(line):
+def parse_transaction(line):
+    """
+    Separates a transaction line into its components
+    """
     try:
         parts = line.strip().split(",")
-        if len(parts) != 4:
+        if len(parts) != 4: #checks to see if the transaction line is in the right format
             return None
         sales_staff_id = int(parts[0])
         transaction_time = datetime.fromisoformat(parts[1])
         products_str = parts[2][1:-1] 
-        products = products_str.split("|") 
+        products = products_str.split("|") #separates each product
         sales_amount = float(parts[3])
         return sales_staff_id, transaction_time, products, sales_amount
     except (ValueError, IndexError) as e:
@@ -19,41 +22,48 @@ def parsing(line):
         return None
 
 def process_transaction_file(filename):
+    """
+    Processes the transaction file and returns a DataFrame
+    """
     date = filename.split(".")[0]
     data = []
-    with open(os.path.join(transaction_dir, filename), "r") as file:
+    with open(os.path.join(directory, filename), "r") as file:
         for line in file:
-            transaction_data = parsing(line)
+            transaction_data = parse_transaction(line) # separates each transaction line in their respective transaction file
             if not transaction_data:
                 continue
             sales_staff_id, transaction_time, products, sales_amount = transaction_data
             for product in products:
-                product_id, quantity = product.split(":")
-                quantity = int(quantity)  
+                product_id, quantity = product.split(":") # separates each product from their quantity
+                quantity = int(quantity)  # sets the quantity type to be an integer
                 data.append([date, sales_staff_id, transaction_time, product_id, 
                              quantity, sales_amount])
     return pd.DataFrame(data, columns=["date", "sales_staff_id", "transaction_time", 
                                        "product_id", "quantity", "sales_amount"])
 
 def main(directory):
+    """
+    Processes all the transaction files in the directory and returns a combined dataframe
+    """
     file_list = sorted([title for title in os.listdir(directory) if title.endswith(".txt")])
     
-    dataframes = []
+    dataframes = [] # Empty list to store all the dataframes
 
-    for filename in file_list:
-        print(f"Processing file: {filename}")
-        df = process_transaction_file(filename)
+    for file in file_list: 
+        print(f"Processing file: {file}")
+        df = process_transaction_file(file)
         print(f"DataFrame shape after processing: {df.shape}")
         dataframes.append(df)
 
     all_data = pd.concat(dataframes, ignore_index=True)
     return all_data
 
+# Building the dataframe by executing main
 directory = "/workspaces/Monieshop-hackathon/test-case2"
 transaction_data = main(directory)
-print(transaction_data.tail())
+print(transaction_data.head())
 
-def metrics(transaction_data):
+def calculate_metrics(transaction_data):
     # Highest sales volume in a day
     volume_of_sales_day = transaction_data.groupby("date")["quantity"].sum()
     highest_sales_volume = int(volume_of_sales_day.max())
@@ -70,7 +80,7 @@ def metrics(transaction_data):
     most_sold_productID_value = int(productID_volume.max())
 
     # Highest sales staff ID for each month
-    transaction_data["month"] = transaction_data["date"].apply(lambda x: x.split("-")[1])
+    transaction_data["month"] = transaction_data["transaction_time"].dt.strftime("%m")
     staff_monthly_sales = transaction_data.groupby(["month", "sales_staff_id"])["sales_amount"].sum().reset_index()
     highest_sales_staff_by_month = staff_monthly_sales.loc[staff_monthly_sales.groupby("month")["sales_amount"].idxmax()]
     highest_sales_staff_by_month = dict(zip(highest_sales_staff_by_month["month"], highest_sales_staff_by_month["sales_staff_id"]))
@@ -89,10 +99,10 @@ def metrics(transaction_data):
         "highest hour avg" : (highest_hourly_avg_volume, highest_avg_hour)
     }
 
-results = metrics(transaction_data)
+results = calculate_metrics(transaction_data)
 
-print(f"1. Day of highest sales volume {results["highest sales volume"][1]} with {results["highest sales volume"][0]} units")
-print(f"2. Day of the highest sales value {results["highest sales value"][1]} with {results["highest sales value"][0]:,.2f} units" )
-print(f"3. Most Product ID sold by volume: Product {results["most sold productID"][1]} with {results["most sold productID"][0]} units sold ")
-print(f"4. Highest sales staff ID for each month: {results["highest sales staff ID"]}")
-print(f"5. Highest hour of the day: {results["highest hour avg"][1]}:00 with an average of {results["highest hour avg"][0]:,.2f} transactions per hour ")
+print("1. Day of highest sales volume:", results["highest sales volume"][1], "with", results["highest sales volume"][0], "units")
+print("2. Day of the highest sales value: ", results["highest sales value"][1], "with", round(results["highest sales value"][0], 2), "units" )
+print("3. Most Product ID sold by volume: Product ",  results["most sold productID"][1], "with", results["most sold productID"][0], "units sold ")
+print("4. Highest sales staff ID for each month: ", results["highest sales staff ID"])
+print("5. Highest hour of the day:", f"{results["highest hour avg"][1]}:00", "with an average of ", round(results["highest hour avg"][0],0), "transactions per hour ")
