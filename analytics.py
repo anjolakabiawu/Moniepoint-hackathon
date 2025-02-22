@@ -106,7 +106,7 @@ def calculate_metrics(transaction_data):
 
 results = calculate_metrics(transaction_data)
 
-print("1. Day of highest sales volume:", results["highest sales volume"][1], "with", f"{results["highest sales volume"][0]}", "units")
+print("1. Day of the highest sales volume:", results["highest sales volume"][1], "with", f"{results["highest sales volume"][0]}", "units")
 print("2. Day of the highest sales value: ", results["highest sales value"][1], "with", f"{results["highest sales value"][0]:,.2f}", "units" )
 print("3. Most Product ID sold by volume: Product ",  results["most sold productID"][1], "with", results["most sold productID"][0], "units sold ")
 print("4. Highest sales staff ID for each month: ", results["highest sales staff ID"])
