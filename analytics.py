@@ -64,6 +64,11 @@ transaction_data = main(directory)
 print(transaction_data.head())
 
 def calculate_metrics(transaction_data):
+    """
+    Computes the required analytical metrics
+    
+    Returns a dictionary with the computed values
+    """
     # Highest sales volume in a day
     volume_of_sales_day = transaction_data.groupby("date")["quantity"].sum()
     highest_sales_volume = int(volume_of_sales_day.max())
@@ -101,8 +106,8 @@ def calculate_metrics(transaction_data):
 
 results = calculate_metrics(transaction_data)
 
-print("1. Day of highest sales volume:", results["highest sales volume"][1], "with", results["highest sales volume"][0], "units")
-print("2. Day of the highest sales value: ", results["highest sales value"][1], "with", round(results["highest sales value"][0], 2), "units" )
+print("1. Day of highest sales volume:", results["highest sales volume"][1], "with", f"{results["highest sales volume"][0]}", "units")
+print("2. Day of the highest sales value: ", results["highest sales value"][1], "with", f"{results["highest sales value"][0]:,.2f}", "units" )
 print("3. Most Product ID sold by volume: Product ",  results["most sold productID"][1], "with", results["most sold productID"][0], "units sold ")
 print("4. Highest sales staff ID for each month: ", results["highest sales staff ID"])
 print("5. Highest hour of the day:", f"{results["highest hour avg"][1]}:00", "with an average of ", round(results["highest hour avg"][0],0), "transactions per hour ")
